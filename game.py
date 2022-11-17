@@ -36,15 +36,15 @@ class Tile:
 class Game:
     game_board = None
     winner = None
+    open_pieces = ['A1', 'A2', 'A3',
+                               'B1', 'B2', 'B3',
+                               'C1', 'C2', 'C3']
 
     def __init__(self):
         self. game_board = [[Tile('A1'), Tile('A2'), Tile('A3')], [
             Tile('B1'), Tile('B2'), Tile('B3')], [Tile('C1'), Tile('C2'), Tile('C3')]]
         self.user = Player()
         self.computer = Player()
-        self.computer.moves = ['A1', 'A2', 'A3',
-                               'B1', 'B2', 'B3',
-                               'C1', 'C2', 'C3']
 
     def print_gameboard(self):
         print('========================')
@@ -72,13 +72,10 @@ class Game:
             self.computer.name = 'O'
         print()
         print('========================')
-        print('Welcome Player {}!!'.format(self.user))
+        print('Welcome Player {}!!'.format(self.user.get_name()))
         print('You will be competing against the computer: Player {}'.format(
             self.computer))
         print('========================\n\n')
-
-    def print_instructions():
-        print("P = prints the current state of the game board")
 
     def is_user_input_valid(self, input):
         input = input.upper()
@@ -105,37 +102,55 @@ class Game:
         return [row, col]
 
     def play_user_move(self, user_choice):
-
         matrix_index = self.convert_choice_to_position(user_choice)
         self.game_board[matrix_index[0]
                         ][matrix_index[1]].played_by = self.user.get_name()
-        self.computer.get_moves().remove(user_choice)
-        self.user.get_moves().append(user_choice)
-        if self.check_for_winner(self.user) == False:
-            self.play_computer_move()
-            if self.check_for_winner(self.computer) == True:
-                self.winner_found(self.computer)
+
+        if user_choice in self.user.get_moves():
+            print('you have already selected this position, try again!')
         else:
-            self.winner_found(self.user)
-        print('game board has been updated')
+            self.open_pieces.remove(user_choice)
+            self.user.get_moves().append(user_choice)
 
     def play_computer_move(self):
-        list = self.computer.get_moves()
+        list = self.open_pieces
         name = self.computer.get_name()
-        length = len(list)
-        choice = list[math.floor(random.randint(0, length-1))]
+        open_length = len(list)
+        if open_length == 0:
+            return
+        choice = list[math.floor(random.randint(0, open_length-1))]
         matrix_index = self.convert_choice_to_position(choice)
         self.game_board[matrix_index[0]
                         ][matrix_index[1]].played_by = name
+        self.computer.get_moves().append(choice)
+        self.open_pieces.remove(choice)
+        print('Player {} played: {}'.format(self.computer.get_name(), choice))
 
-    def winner_found(self):
-        return False
+    def winner_found(self, player):
+        self.print_gameboard()
+        print('THE WINNER IS: ' + player.get_name())
 
     def check_for_winner(self, player):
+        if (all(x in player.get_moves() for x in ['A1', 'A2', 'A3'])):
+            return True
+        if (all(x in player.get_moves() for x in ['B1', 'B2', 'B3'])):
+            return True
+        if (all(x in player.get_moves() for x in ['C1', 'C2', 'C3'])):
+            return True
+        if (all(x in player.get_moves() for x in ['A1', 'B2', 'C3'])):
+            return True
+        if (all(x in player.get_moves() for x in ['A3', 'B2', 'C1'])):
+            return True
+        if (all(x in player.get_moves() for x in ['A1', 'B1', 'C1'])):
+            return True
+        if (all(x in player.get_moves() for x in ['A2', 'B2', 'C2'])):
+            return True
+        if (all(x in player.get_moves() for x in ['A3', 'B3', 'C3'])):
+            return True
         return False
 
     def game_loop(self):
-        while self.winner_found() == False:
+        while len(self.open_pieces):
             self.print_gameboard()
             user_choice = input(
                 'Enter your move [Player '+self.user.get_name() + ']: ').upper()
@@ -144,6 +159,16 @@ class Game:
                     'Invalid input. Please enter your move: ').upper()
                 self.print_gameboard()
             self.play_user_move(user_choice)
+
+            if self.check_for_winner(self.user) == False:
+                self.play_computer_move()
+                if self.check_for_winner(self.computer) == True:
+                    self.winner_found(self.computer)
+                    break
+            else:
+                self.winner_found(self.user)
+                break
+        print('Game over, mannn!')
 
     def start_game(self):
         print('WELCOME TO TIC TAC TOE!!')
